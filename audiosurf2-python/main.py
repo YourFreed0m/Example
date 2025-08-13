@@ -113,13 +113,13 @@ def input(key):
     global fb
     if key == 'f' and fb is None:
         patterns = ("*.mp3","*.MP3","*.wav","*.WAV","*.ogg","*.OGG","*.flac","*.FLAC","*.m4a","*.M4A","*.*")
-        fb = FileBrowser(file_types=patterns, start_path=str(Path.home()))
+        fb = FileBrowser(file_types=patterns, start_path=Path.home())
         def picked(p):
             global fb
             path = p[0] if isinstance(p, (list, tuple)) else p
             if path:
                 try:
-                    audio.load(path)
+                    audio.load(str(path))
                 except Exception as e:
                     print('Audio load failed:', e)
             fb.disable(); fb = None
