@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https: data:;" />
+    <title>Mini Browser</title>
+    <style>
+      html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+      #toolbar { display: flex; gap: 8px; padding: 8px; align-items: center; border-bottom: 1px solid #ddd; }
+      button { padding: 6px 10px; }
+      #addr { flex: 1; padding: 6px 10px; font-size: 14px; }
+      #hint { font-size: 12px; opacity: .6; padding: 4px 8px; }
+    </style>
+  </head>
+  <body>
+    <div id="toolbar">
+      <button id="back">⟵</button>
+      <button id="fwd">⟶</button>
+      <button id="reload">↻</button>
+      <input id="addr" placeholder="Введите URL или запрос"/>
+    </div>
+    <div id="hint">Enter: перейти, ⟵/⟶: назад/вперед</div>
+    <script>
+      const addr = document.getElementById('addr');
+      const back = document.getElementById('back');
+      const fwd = document.getElementById('fwd');
+      const reloadBtn = document.getElementById('reload');
+
+      async function syncUrl() {
+        try { addr.value = await window.mb.getUrl(); } catch {}
+      }
+      setInterval(syncUrl, 1000);
+
+      back.onclick = () => window.mb.back().then(syncUrl);
+      fwd.onclick = () => window.mb.forward().then(syncUrl);
+      reloadBtn.onclick = () => window.mb.reload().then(syncUrl);
+
+      addr.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          window.mb.go(addr.value).then(syncUrl);
+        }
+      });
+    </script>
+  </body>
+</html>

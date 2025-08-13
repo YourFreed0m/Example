@@ -1,0 +1,14 @@
+{
+  "name": "mini-browser",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-packager . mini-browser --platform=linux --arch=x64 --overwrite"
+  },
+  "devDependencies": {
+    "electron": "^31.3.0",
+    "electron-packager": "^17.1.2"
+  }
+}
