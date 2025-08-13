@@ -4,6 +4,8 @@ from ursina.prefabs.file_browser import FileBrowser
 from pydub import AudioSegment
 import numpy as np
 from pathlib import Path
+import tkinter as tk
+from tkinter import filedialog
 
 WIN_W, WIN_H = 1280, 800
 
@@ -76,7 +78,7 @@ class Pickup(Entity):
     def __init__(self, lane: int, z: float):
         super().__init__(model='sphere', scale=0.6, color=Color(0,1,1,1))
         self.x = lane * 2.0
-        self.y = 0.3
+        self.y = 0.15
         self.z = z
 
     def update(self):
@@ -86,7 +88,7 @@ class Pickup(Entity):
 
 class Rider(Entity):
     def __init__(self):
-        super().__init__(model='sphere', color=Color(1,0.8,0,1), scale=0.8, y=0.2, z=-2.5)
+        super().__init__(model='sphere', color=Color(1,0.8,0,1), scale=0.8, y=0.08, z=-1.0)
         self.target_x = 0.0
 
     def update(self):
@@ -96,8 +98,8 @@ class Rider(Entity):
 app = Ursina(borderless=False)
 window.size = (WIN_W, WIN_H)
 # Camera so player is near bottom
-camera.position = (0, 4, -13)
-camera.look_at((0,0.25,-2.5))
+camera.position = (0, 3.5, -13)
+camera.look_at((0,0.1,-1.0))
 
 for i in (-1, 0, 1):
     Entity(model='cube', position=(i*2.0, 0, 0), scale=(1.9, 0.1, 200), color=Color(0.12,0.15,0.2,1))
@@ -112,6 +114,19 @@ Text("Мышь: X — полоса | F: выбрать аудио", position=(-0
 def input(key):
     global fb
     if key == 'f' and fb is None:
+        # Tk fallback first (broader OS support for files); then Ursina FileBrowser
+        try:
+            root = tk.Tk(); root.withdraw()
+            path = filedialog.askopenfilename(initialdir=str(Path.home()), filetypes=[
+                ('Audio', '*.mp3 *.MP3 *.wav *.WAV *.ogg *.OGG *.flac *.FLAC *.m4a *.M4A'),
+                ('All files', '*.*')
+            ])
+            root.destroy()
+            if path:
+                audio.load(path)
+                return
+        except Exception as e:
+            print('Tk file dialog failed:', e)
         patterns = ("*.mp3","*.MP3","*.wav","*.WAV","*.ogg","*.OGG","*.flac","*.FLAC","*.m4a","*.M4A","*.*")
         fb = FileBrowser(file_types=patterns, start_path=Path.home())
         def picked(p):
