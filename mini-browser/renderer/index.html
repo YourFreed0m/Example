@@ -5,41 +5,90 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https: data:;" />
     <title>Mini Browser</title>
     <style>
-      html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-      #toolbar { display: flex; gap: 8px; padding: 8px; align-items: center; border-bottom: 1px solid #ddd; }
-      button { padding: 6px 10px; }
-      #addr { flex: 1; padding: 6px 10px; font-size: 14px; }
-      #hint { font-size: 12px; opacity: .6; padding: 4px 8px; }
+      html, body { height: 100%; margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #f6f7fb; }
+      #frame { display: grid; grid-template-rows: 36px 36px 1fr; height: 100%; }
+      #tabs { display: flex; gap: 6px; padding: 4px 8px; background: #eceef4; align-items: center; }
+      .tab { position: relative; padding: 6px 10px; border-radius: 10px 10px 0 0; background: #dddfea; cursor: pointer; user-select: none; }
+      .tab.active { background: #ffffff; box-shadow: 0 1px 0 #fff inset; }
+      .tab .close { margin-left: 8px; opacity: .6; }
+      #newTab { width: 26px; height: 26px; border-radius: 13px; border: 1px solid #cfd3e0; display: grid; place-items: center; background: #f9fafc; cursor: pointer; }
+
+      #toolbar { display: grid; grid-template-columns: 28px 28px 28px 1fr 28px; gap: 8px; align-items: center; padding: 4px 10px; background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,.06); }
+      .btn { height: 28px; width: 28px; display: grid; place-items: center; border-radius: 6px; border: 1px solid #e6e9f2; background: #f7f8fc; cursor: pointer; }
+      .btn:hover { background: #eef1f7; }
+      #omnibox { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border: 1px solid #dfe3ee; border-radius: 16px; background: #f3f6fc; }
+      #addr { flex: 1; border: none; background: transparent; outline: none; font-size: 14px; }
+      #qr { width: 28px; height: 28px; border-radius: 6px; border: 1px solid #e6e9f2; background: #f7f8fc; cursor: pointer; }
+
+      #qrPopup { position: fixed; top: 60px; right: 20px; background: #fff; border: 1px solid #e3e6f0; border-radius: 12px; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.08); display: none; }
+      #qrPopup img { width: 128px; height: 128px; }
     </style>
   </head>
   <body>
-    <div id="toolbar">
-      <button id="back">⟵</button>
-      <button id="fwd">⟶</button>
-      <button id="reload">↻</button>
-      <input id="addr" placeholder="Введите URL или запрос"/>
+    <div id="frame">
+      <div id="tabs">
+        <div id="tabsContainer" style="display:flex; gap:6px; flex:1;"></div>
+        <div id="newTab">+</div>
+      </div>
+      <div id="toolbar">
+        <div class="btn" id="back">⟵</div>
+        <div class="btn" id="fwd">⟶</div>
+        <div class="btn" id="reload">↻</div>
+        <div id="omnibox"><input id="addr" placeholder="Введите URL или запрос"/></div>
+        <div id="qr">QR</div>
+      </div>
+      <div id="content"></div>
     </div>
-    <div id="hint">Enter: перейти, ⟵/⟶: назад/вперед</div>
+    <div id="qrPopup"><img/></div>
     <script>
+      const tabsContainer = document.getElementById('tabsContainer');
+      const newTab = document.getElementById('newTab');
       const addr = document.getElementById('addr');
       const back = document.getElementById('back');
       const fwd = document.getElementById('fwd');
       const reloadBtn = document.getElementById('reload');
+      const qrBtn = document.getElementById('qr');
+      const qrPopup = document.getElementById('qrPopup');
+      const qrImg = qrPopup.querySelector('img');
 
-      async function syncUrl() {
-        try { addr.value = await window.mb.getUrl(); } catch {}
+      function renderTabs(state) {
+        tabsContainer.innerHTML = '';
+        for (let i = 0; i < state.count; i++) {
+          const t = document.createElement('div');
+          t.className = 'tab' + (i === state.active ? ' active' : '');
+          t.textContent = 'Вкладка ' + (i+1);
+          const c = document.createElement('span'); c.textContent = '×'; c.className = 'close';
+          c.onclick = (e) => { e.stopPropagation(); window.mb.closeTab(i); };
+          t.appendChild(c);
+          t.onclick = () => window.mb.switchTab(i);
+          tabsContainer.appendChild(t);
+        }
       }
-      setInterval(syncUrl, 1000);
 
-      back.onclick = () => window.mb.back().then(syncUrl);
-      fwd.onclick = () => window.mb.forward().then(syncUrl);
-      reloadBtn.onclick = () => window.mb.reload().then(syncUrl);
+      window.mb.onTabsUpdate((state) => {
+        renderTabs(state);
+        addr.value = state.url || '';
+      });
+
+      newTab.onclick = () => window.mb.newTab('https://www.google.com');
+      back.onclick = () => window.mb.back();
+      fwd.onclick = () => window.mb.forward();
+      reloadBtn.onclick = () => window.mb.reload();
 
       addr.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          window.mb.go(addr.value).then(syncUrl);
-        }
+        if (e.key === 'Enter') window.mb.go(addr.value);
       });
+
+      qrBtn.onclick = async () => {
+        const url = await window.mb.getUrl();
+        const data = await window.mb.qrFor(url || '');
+        qrImg.src = data;
+        qrPopup.style.display = 'block';
+        setTimeout(() => qrPopup.style.display = 'none', 4000);
+      };
+
+      // initial sync
+      (async () => { addr.value = await window.mb.getUrl(); })();
     </script>
   </body>
 </html>
