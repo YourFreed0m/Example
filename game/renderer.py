@@ -45,22 +45,20 @@ void main() {
 }
 """
 
+// Fullscreen sky quad shaders
 SKY_VERT = """
 #version 330
-layout (location = 0) in vec3 in_position;
-uniform mat4 u_view;
-uniform mat4 u_proj;
-out vec3 v_dir;
+layout (location = 0) in vec2 in_position;
+out vec2 v_pos;
 void main() {
-    vec4 pos = vec4(in_position, 0.0); // sky at infinity
-    gl_Position = u_proj * mat4(mat3(u_view)) * pos;
-    v_dir = in_position;
+    v_pos = in_position;
+    gl_Position = vec4(in_position, 0.0, 1.0);
 }
 """
 
 SKY_FRAG = """
 #version 330
-in vec3 v_dir;
+in vec2 v_pos;
 uniform float u_time;
 uniform vec3 u_sun_dir;
 out vec4 fragColor;
@@ -84,7 +82,7 @@ vec3 sky_color(vec3 dir, vec3 sun_dir) {
 }
 
 void main() {
-    vec3 dir = normalize(v_dir);
+    vec3 dir = normalize(vec3(v_pos, 1.0));
     vec3 sun_dir = normalize(u_sun_dir);
     vec3 col = sky_color(dir, sun_dir);
     fragColor = vec4(col, 1.0);
@@ -96,7 +94,6 @@ def _set_uniform_safe(program: moderngl.Program, name: str, value) -> None:
     try:
         program[name].value = value
     except KeyError:
-        # Uniform might be optimized out; ignore
         pass
 
 
@@ -108,13 +105,18 @@ class Renderer:
         self.program = self.ctx.program(vertex_shader=VERT_SRC, fragment_shader=FRAG_SRC)
         self.sky_program = self.ctx.program(vertex_shader=SKY_VERT, fragment_shader=SKY_FRAG)
 
-        # Simple sky dome directions (cube strip)
+        # Fullscreen quad for sky
         sky_vertices = np.array([
-            -1, -1, -1,  1, -1, -1, -1,  1, -1,  1,  1,
-            -1, -1,  1,  1, -1,  1, -1,  1, -1,  1,  1,
+            -1.0, -1.0,
+             1.0, -1.0,
+             1.0,  1.0,
+            -1.0,  1.0,
         ], dtype='f4')
         self.sky_vbo = self.ctx.buffer(sky_vertices.tobytes())
-        self.sky_vao = self.ctx.simple_vertex_array(self.sky_program, self.sky_vbo, 'in_position')
+        self.sky_vao = self.ctx.vertex_array(
+            self.sky_program,
+            [ (self.sky_vbo, '2f', 'in_position') ]
+        )
 
         self.atlas_texture = None
         self.uvs: Dict[str, Tuple[float, float, float, float]] = {}
@@ -130,6 +132,8 @@ class Renderer:
         self.atlas_texture = self.ctx.texture(image.size, 4, image.tobytes())
         self.atlas_texture.build_mipmaps()
         self.atlas_texture.use(location=0)
+        # Bind sampler uniform to texture unit 0
+        _set_uniform_safe(self.program, 'u_atlas', 0)
 
     def rebuild_chunk(self, world, chunk):
         key = chunk.coords
@@ -154,7 +158,8 @@ class Renderer:
     def draw_world(self, world, camera, time_of_day: float):
         width, height = self.window.get_size()
         aspect = width / max(1, height)
-        self.ctx.enable(moderngl.DEPTH_TEST | moderngl.CULL_FACE)
+        self.ctx.enable(moderngl.DEPTH_TEST)
+        self.ctx.disable(moderngl.CULL_FACE)
 
         # Projection and view
         import glm
@@ -168,22 +173,19 @@ class Renderer:
         sun_color = (0.9 * day_factor + 0.1, 0.85 * day_factor + 0.15, 0.8 * day_factor + 0.2)
         ambient = 0.2 + 0.5 * day_factor
 
-        # Sky
+        # Sky (draw first without depth test)
         self.ctx.disable(moderngl.DEPTH_TEST)
-        self.sky_program['u_view'].write(bytes(view))
-        self.sky_program['u_proj'].write(bytes(proj))
         _set_uniform_safe(self.sky_program, 'u_time', time_of_day)
         _set_uniform_safe(self.sky_program, 'u_sun_dir', sun_dir)
-        self.sky_vao.render(mode=moderngl.TRIANGLE_STRIP)
+        self.sky_vao.render(mode=moderngl.TRIANGLE_STRIP, vertices=4)
 
         # World
-        self.ctx.enable(moderngl.DEPTH_TEST | moderngl.CULL_FACE)
+        self.ctx.enable(moderngl.DEPTH_TEST)
         self.program['u_proj'].write(bytes(proj))
         self.program['u_view'].write(bytes(view))
         self.program['u_sun_color'].value = sun_color
         self.program['u_ambient'].value = ambient
-        if world.uvs is None:
-            world.uvs = self.uvs
+        _set_uniform_safe(self.program, 'u_atlas', 0)
 
         for key, vao in self.chunk_vaos.items():
             cx, cz = key
