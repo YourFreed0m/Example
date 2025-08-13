@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voxel RPG</title>
+    <style>
+      html, body, #app { height: 100%; margin: 0; }
+      body { background: #000; color: #fff; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+      #hud {
+        position: fixed; inset: 0; pointer-events: none; display: grid; grid-template-rows: 1fr auto; padding: 12px;
+      }
+      #bars { display: flex; gap: 8px; align-items: flex-end; justify-content: center; margin-bottom: 8px; }
+      .bar { width: 220px; height: 14px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; overflow: hidden; }
+      .fill { height: 100%; transition: width .15s ease; }
+      #hp .fill { background: linear-gradient(90deg, #ff3838, #b30000); }
+      #stam .fill { background: linear-gradient(90deg, #4cd137, #1e8c0b); }
+      #mana .fill { background: linear-gradient(90deg, #3498db, #165a87); }
+      #xp .fill { background: linear-gradient(90deg, #f1c40f, #b68d00); }
+      #bottomRow { display: flex; align-items: center; justify-content: space-between; }
+      #level { pointer-events: none; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+      #hotbar { pointer-events: auto; display: flex; gap: 6px; }
+      .slot { width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.35); border-radius: 6px; display: grid; place-items: center; }
+      .slot.active { outline: 2px solid #fff; }
+      #tooltip { position: fixed; left: 50%; bottom: 60px; transform: translateX(-50%); opacity: .8; font-size: 12px; }
+      #crosshair { position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 20px; height: 20px; opacity: .7; pointer-events: none; }
+      #crosshair::before, #crosshair::after { content: ""; position: absolute; background: #fff; }
+      #crosshair::before { left: 9px; top: 0; width: 2px; height: 20px; }
+      #crosshair::after { top: 9px; left: 0; width: 20px; height: 2px; }
+      #menu { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(1000px 600px at 50% 40%, rgba(0,0,0,.5), rgba(0,0,0,.85)); }
+      #menu button { pointer-events: auto; padding: 12px 16px; border-radius: 8px; border: 0; font-weight: 700; background: #ffffff; color: #111; cursor: pointer; }
+      #credits { position: fixed; right: 8px; bottom: 8px; opacity: .5; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="hud" style="display:none">
+      <div></div>
+      <div id="bottomRow">
+        <div id="level">Lv 1</div>
+        <div id="bars">
+          <div id="hp" class="bar"><div class="fill" style="width:100%"></div></div>
+          <div id="stam" class="bar"><div class="fill" style="width:100%"></div></div>
+          <div id="mana" class="bar"><div class="fill" style="width:100%"></div></div>
+          <div id="xp" class="bar"><div class="fill" style="width:0%"></div></div>
+        </div>
+        <div id="hotbar"></div>
+      </div>
+    </div>
+    <div id="tooltip">ЛКМ: ломать | ПКМ: ставить | 1-5: выбрать блок | Esc: меню</div>
+    <div id="crosshair"></div>
+    <div id="menu"><button id="startBtn">Играть</button></div>
+    <div id="credits">Voxel RPG демо</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
