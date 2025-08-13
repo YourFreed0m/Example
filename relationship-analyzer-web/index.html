@@ -9,9 +9,14 @@
 <body>
 	<header class="app-header">
 		<h1>Анализатор отношений</h1>
+		<nav class="tabs">
+			<button class="tab-btn" data-view="events">События</button>
+			<button class="tab-btn" data-view="tests">Тесты</button>
+			<button class="tab-btn" data-view="dashboard">Дашборд</button>
+		</nav>
 	</header>
 	<main class="container">
-		<section class="panel" id="events-panel">
+		<section class="panel" id="events-panel" data-view="events">
 			<h2>События</h2>
 			<div class="form-row">
 				<select id="event-type">
@@ -31,30 +36,23 @@
 			<div class="events-list" id="events-list"></div>
 		</section>
 
-		<section class="panel" id="questionnaires-panel">
-			<h2>Анкеты</h2>
-			<div class="q-block">
-				<h3>Счастье</h3>
-				<label>Насколько вы счастливы? (0..1)
-					<input type="number" id="q-happiness" min="0" max="1" step="0.1" value="0.7" />
-				</label>
-				<label>Удовлетворены ли общением? (0..1)
-					<input type="number" id="q-satisfaction" min="0" max="1" step="0.1" value="0.7" />
-				</label>
-				<button id="submit-happiness">Сохранить</button>
+		<section class="panel" id="tests-panel" data-view="tests">
+			<h2>Тесты</h2>
+			<div id="tests-list" class="cards"></div>
+		</section>
+
+		<section class="panel hidden" id="test-runner" data-view="test-runner">
+			<div class="runner-header">
+				<button id="back-to-tests" class="ghost">← Назад</button>
+				<h2 id="test-title">Тест</h2>
 			</div>
-			<div class="q-block">
-				<h3>Языки любви (сумма любых чисел, мы нормализуем)</h3>
-				<label>Слова поддержки <input type="number" id="ll-words" step="1" value="2" /></label>
-				<label>Совместное время <input type="number" id="ll-time" step="1" value="2" /></label>
-				<label>Подарки <input type="number" id="ll-gifts" step="1" value="1" /></label>
-				<label>Забота/помощь <input type="number" id="ll-service" step="1" value="1" /></label>
-				<label>Физический контакт <input type="number" id="ll-touch" step="1" value="1" /></label>
-				<button id="submit-ll">Сохранить</button>
+			<form id="test-form"></form>
+			<div class="runner-actions">
+				<button id="submit-test" type="button">Завершить тест</button>
 			</div>
 		</section>
 
-		<section class="panel" id="dashboard-panel">
+		<section class="panel" id="dashboard-panel" data-view="dashboard">
 			<h2>Дашборд</h2>
 			<div class="stats-grid">
 				<div class="stat"><div class="label">Здоровье</div><div class="value" id="stat-health">—</div></div>

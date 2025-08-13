@@ -52,3 +52,16 @@ button:hover{background:#141824}
 .ll-item .bar{height:8px;background:linear-gradient(90deg,var(--accent),#9fd1ff);border-radius:4px;margin-top:8px}
 .app-footer{padding:12px 20px;border-top:1px solid #20242e;color:var(--muted);}
 @media (max-width: 900px){.stats-grid,.ll-grid{grid-template-columns:repeat(2,1fr)}}
+.hidden{display:none}
+.tabs{display:flex;gap:8px;margin-top:8px}
+.tab-btn{background:#1b202c;border:1px solid #2b3345;color:#dbe3ef;padding:8px 12px;border-radius:8px}
+.tab-btn.active{background:#253048}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{background:#11141b;border:1px solid #22283a;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.card h4{margin:0}
+.ghost{background:transparent;border:1px solid #2a3143}
+.runner-header{display:flex;align-items:center;gap:12px}
+#test-form{display:grid;gap:12px;margin-top:10px}
+.question{background:#0f131b;border:1px solid #20283a;border-radius:8px;padding:12px}
+.question .title{margin-bottom:6px}
+.option{display:flex;align-items:center;gap:8px;margin:4px 0}
