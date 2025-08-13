@@ -1,8 +1,8 @@
 from ursina import *
 from ursina import Color
+from ursina.prefabs.file_browser import FileBrowser
 from pydub import AudioSegment
 import numpy as np
-from tkinter import Tk, filedialog
 
 WIN_W, WIN_H = 1280, 800
 
@@ -24,7 +24,6 @@ class AudioAnalyzer:
         s = np.array(seg.get_array_of_samples(), dtype=np.float32)
         m = np.max(np.abs(s))
         self.samples = (s / m) if m > 0 else s
-        # playback using system default player is out-of-scope; rely on external playback or silence
 
     def get_beats(self, dt):
         if self.samples is None:
@@ -92,7 +91,7 @@ class Pickup(Entity):
 
 class Rider(Entity):
     def __init__(self):
-        super().__init__(model='torus', color=Neon.mat(Color(1,0.8,0,1)), scale=0.8, y=0.5, z=4)
+        super().__init__(model='sphere', color=Neon.mat(Color(1,0.8,0,1)), scale=0.8, y=0.5, z=4)
         self.target_x = 0.0
 
     def update(self):
@@ -104,35 +103,33 @@ class Game(Ursina):
         window.size = (WIN_W, WIN_H)
         camera.position = (0, 5, -8)
         camera.look_at((0,0.5,0))
-        # Lanes
         for i in (-1, 0, 1):
             Entity(model='cube', position=(i*2.0, 0, 0), scale=(1.9, 0.1, 200), color=Color(0.12,0.15,0.2,1))
-            # Neon stripes
             Entity(model='cube', position=(i*2.0, 0.06, 0), scale=(0.05, 0.01, 200), color=Color(0,1,1,1))
         self.rider = Rider()
         self.audio = AudioAnalyzer()
-        self.last_spawn_z = -80
-        # UI
+        self.fb: FileBrowser | None = None
         Text("Мышь: X — полоса | F: выбрать аудио", position=(-0.5, 0.45), scale=1, origin=(-.5,-.5))
 
     def input(self, key):
-        if key == 'f':
-            try:
-                Tk().withdraw()
-                file = filedialog.askopenfilename(filetypes=[("Audio","*.mp3 *.wav *.ogg *.flac *.m4a")])
-                if file:
-                    self.audio.load(file)
-            except Exception as e:
-                print('Audio load failed:', e)
+        if key == 'f' and self.fb is None:
+            self.fb = FileBrowser(file_types=("*.mp3","*.wav","*.ogg","*.flac","*.m4a"))
+            def picked(p):
+                if p:
+                    try:
+                        self.audio.load(p)
+                    except Exception as e:
+                        print('Audio load failed:', e)
+                self.fb.disable()
+                self.fb = None
+            self.fb.on_submit = picked
+            self.fb.on_cancel = lambda: (self.fb.disable(), setattr(self, 'fb', None))
 
     def update(self):
-        # Mouse X -> lane
-        nx = mouse.position[0]  # -1..1 in viewport coords
+        nx = mouse.position[0]
         lane = int(round((nx+1)/2 * 2)) - 1
         lane = max(-1, min(1, lane))
         self.rider.target_x = lane * 2.0
-
-        # Beat-synced spawns
         bl, bm, bh = self.audio.get_beats(time.dt)
         if bl: Pickup(-1, -60)
         if bm: Pickup(0, -60)
