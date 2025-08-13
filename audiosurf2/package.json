@@ -1,18 +1,39 @@
 {
-  "name": "audiosurf2",
-  "version": "0.1.0",
+  "name": "audiosurf2-desktop",
+  "version": "0.2.0",
   "private": true,
-  "type": "module",
+  "main": "main.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview --port 5175"
+    "start": "electron .",
+    "dist:win": "electron-builder -w",
+    "dist:linux": "electron-builder -l"
   },
   "dependencies": {
+    "electron": "^31.3.0",
+    "qrcode": "^1.5.4",
     "three": "^0.165.0"
   },
   "devDependencies": {
-    "typescript": "^5.5.4",
-    "vite": "^5.4.1"
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.example.audiosurf2",
+    "productName": "Audiosurf2 Mini",
+    "files": [
+      "**/*",
+      "!node_modules/.cache/**"
+    ],
+    "asar": true,
+    "directories": {
+      "buildResources": "build"
+    },
+    "win": {
+      "target": ["nsis"],
+      "icon": "build/icon.ico"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "icon": "build"
+    }
   }
 }
