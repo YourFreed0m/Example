@@ -95,6 +95,9 @@ class VoxelWorld:
             return
         tex_path = self.textures.get(block_id)
         v = Voxel(position=(x, y, z), texture_path=tex_path, block_id=block_id)
+        # Subtle checkerboard shading to reveal block boundaries
+        shade = 0.96 if ((x + z) & 1) == 0 else 1.0
+        v.color = Color(shade, shade, shade, 1)
         self.blocks[k] = v
 
     def get_block(self, x: int, y: int, z: int) -> str:
