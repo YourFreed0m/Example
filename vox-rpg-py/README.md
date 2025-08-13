@@ -5,7 +5,7 @@ Features:
 - First-person controls (WASD + Space), mouse lock toggle with Esc
 - RPG: XP, levels, HP/Stamina/Mana bars, hotbar 1-5
 - Auto-save every 2s (position, stats, modified blocks)
-- Textures auto-downloaded on first run from the internet
+- Textures included locally in vox-rpg-py/textures, with URL fallback if missing
 
 Run:
 - Install: `pip install -r requirements.txt`
