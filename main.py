@@ -35,7 +35,11 @@ if __name__ == "__main__":
         if args.headless:
             sys.exit(run_headless_validation())
         else:
-            sys.exit(run_windowed())
+            try:
+                sys.exit(run_windowed())
+            except Exception as exc:
+                print(f"Windowed mode failed ({exc}); falling back to headless...")
+                sys.exit(run_headless_validation())
     except Exception as exc:
         print(f"Fatal error: {exc}")
         sys.exit(1)
