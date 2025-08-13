@@ -2,3 +2,4 @@ ursina>=5.0.0
 noise>=1.2.2
 perlin-noise>=1.12
 requests>=2.31.0
+Pillow>=10.4.0
