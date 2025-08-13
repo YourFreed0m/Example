@@ -1,0 +1,55 @@
+Collecting Pillow==10.4.0
+  Downloading pillow-10.4.0-cp313-cp313-manylinux_2_28_x86_64.whl.metadata (9.2 kB)
+Collecting noise==1.2.2
+  Downloading noise-1.2.2.zip (132 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting requests==2.32.3
+  Downloading requests-2.32.3-py3-none-any.whl.metadata (4.6 kB)
+Collecting numpy==1.26.4
+  Downloading numpy-1.26.4.tar.gz (15.8 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.8/15.8 MB 185.6 MB/s eta 0:00:00
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): still running...
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting charset-normalizer<4,>=2 (from requests==2.32.3)
+  Downloading charset_normalizer-3.4.3-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (36 kB)
+Collecting idna<4,>=2.5 (from requests==2.32.3)
+  Downloading idna-3.10-py3-none-any.whl.metadata (10 kB)
+Collecting urllib3<3,>=1.21.1 (from requests==2.32.3)
+  Downloading urllib3-2.5.0-py3-none-any.whl.metadata (6.5 kB)
+Collecting certifi>=2017.4.17 (from requests==2.32.3)
+  Downloading certifi-2025.8.3-py3-none-any.whl.metadata (2.4 kB)
+Downloading pillow-10.4.0-cp313-cp313-manylinux_2_28_x86_64.whl (4.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 146.3 MB/s eta 0:00:00
+Downloading requests-2.32.3-py3-none-any.whl (64 kB)
+Downloading certifi-2025.8.3-py3-none-any.whl (161 kB)
+Downloading charset_normalizer-3.4.3-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (151 kB)
+Downloading idna-3.10-py3-none-any.whl (70 kB)
+Downloading urllib3-2.5.0-py3-none-any.whl (129 kB)
+Building wheels for collected packages: noise, numpy
+  Building wheel for noise (pyproject.toml): started
+  Building wheel for noise (pyproject.toml): finished with status 'done'
+  Created wheel for noise: filename=noise-1.2.2-cp313-cp313-linux_x86_64.whl size=57445 sha256=903ed28b8d236f5cc13a3e1050dc95b4446e54cdbc6d41804fa6c00c89acf29e
+  Stored in directory: /home/ubuntu/.cache/pip/wheels/6a/4c/99/fe9adf3dca70780d28cf2e24e63a11fee02bdbe5d9931d3c38
+  Building wheel for numpy (pyproject.toml): started
+  Building wheel for numpy (pyproject.toml): finished with status 'done'
+  Created wheel for numpy: filename=numpy-1.26.4-cp313-cp313-linux_x86_64.whl size=8162811 sha256=132dc3720f8530eca1c9e6c75740b46f6c39c4fba847864cfffe70af1d4fd453
+  Stored in directory: /home/ubuntu/.cache/pip/wheels/8b/2d/9f/b6b46373f328e2ef50388915d351ccacbedac929459b5459bf
+Successfully built noise numpy
+Installing collected packages: noise, urllib3, Pillow, numpy, idna, charset-normalizer, certifi, requests
+  WARNING: The script f2py is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script normalizer is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+Successfully installed Pillow-10.4.0 certifi-2025.8.3 charset-normalizer-3.4.3 idna-3.10 noise-1.2.2 numpy-1.26.4 requests-2.32.3 urllib3-2.5.0

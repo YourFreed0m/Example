@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environments
+.venv/
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Assets generated at runtime
+assets/atlas/
+assets/cache/
+
+# Logs
+*.log
