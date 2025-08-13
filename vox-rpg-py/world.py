@@ -1,4 +1,4 @@
-from ursina import Entity, scene, load_texture, Color
+from ursina import Entity, scene, Color
 from typing import Dict, Tuple
 
 # Noise helpers: prefer noise.pnoise2; fallback to perlin-noise if not available
@@ -45,7 +45,7 @@ class Voxel(Entity):
             position=position,
             model='cube',
             origin_y=.5,
-            texture=load_texture(texture_path) if texture_path else None,
+            texture=texture_path, 
             color=Color(1, 1, 1, 1),
             collider='box'
         )
@@ -110,7 +110,7 @@ class VoxelWorld:
         else:
             if k in self.blocks:
                 # Replace texture and id
-                self.blocks[k].texture = load_texture(self.textures.get(block_id))
+                self.blocks[k].texture = self.textures.get(block_id)
                 self.blocks[k].block_id = block_id
             else:
                 self._spawn((x, y, z), block_id)
