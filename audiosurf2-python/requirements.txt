@@ -1,4 +1,4 @@
-pygame>=2.5.2
-pydub>=0.25.1
+ursina>=5.0.0
 numpy>=1.26.4
-simpleaudio>=1.0.4
+pydub>=0.25.1
+Pillow>=10.4.0
