@@ -3,15 +3,14 @@ import pathlib
 import requests
 from typing import Dict
 
-# Texture sources: singlecolorimage.com returns a PNG of the given hex color and size.
-# These are generated images from the internet, suitable as placeholder textures.
+# Prefer local files; fallback to downloading if missing
 TEXTURE_SPECS = {
-    'grass':   ('https://singlecolorimage.com/get/55aa55/32x32', 'grass.png'),
-    'dirt':    ('https://singlecolorimage.com/get/8b5a2b/32x32', 'dirt.png'),
-    'stone':   ('https://singlecolorimage.com/get/888888/32x32', 'stone.png'),
-    'log':     ('https://singlecolorimage.com/get/8b6b3b/32x32', 'log.png'),
-    'plank':   ('https://singlecolorimage.com/get/caa472/32x32', 'plank.png'),
-    'water':   ('https://singlecolorimage.com/get/3a71c4/32x32', 'water.png')
+    'grass':   ('https://singlecolorimage.com/get/55aa55/64x64', 'grass.png'),
+    'dirt':    ('https://singlecolorimage.com/get/8b5a2b/64x64', 'dirt.png'),
+    'stone':   ('https://singlecolorimage.com/get/888888/64x64', 'stone.png'),
+    'log':     ('https://singlecolorimage.com/get/8b6b3b/64x64', 'log.png'),
+    'plank':   ('https://singlecolorimage.com/get/caa472/64x64', 'plank.png'),
+    'water':   ('https://singlecolorimage.com/get/3a71c4/64x64', 'water.png')
 }
 
 ASSET_DIR = pathlib.Path(__file__).resolve().parent / 'textures'
