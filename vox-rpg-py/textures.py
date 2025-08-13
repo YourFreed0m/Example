@@ -30,5 +30,6 @@ def ensure_textures_downloaded() -> Dict[str, str]:
                 print(f"Downloaded texture: {key} -> {local_path}")
             except Exception as e:
                 print(f"Warning: failed to download {key} from {url}: {e}")
-        paths[key] = str(local_path)
+        # return relative path from asset_folder
+        paths[key] = f"textures/{filename}"
     return paths

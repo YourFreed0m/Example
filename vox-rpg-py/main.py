@@ -1,7 +1,11 @@
 from ursina import *
-from ursina import Color
+from ursina import Color, application
 from ursina.prefabs.first_person_controller import FirstPersonController
 from typing import Dict
+from pathlib import Path
+
+# Ensure asset folder is the project directory so 'textures/*.png' resolves
+application.asset_folder = Path(__file__).resolve().parent
 
 from rpg import PlayerStats, Inventory, save_game, load_game
 from world import VoxelWorld
