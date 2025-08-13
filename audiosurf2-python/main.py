@@ -71,18 +71,12 @@ class AudioAnalyzer:
         if beat_high: self.cool_high = 0.18
         return (beat_low, beat_mid, beat_high)
 
-class Neon:
-    @staticmethod
-    def mat(color: Color) -> Color:
-        return color
-
 class Pickup(Entity):
     def __init__(self, lane: int, z: float):
-        super().__init__(model='sphere', scale=0.6, color=Neon.mat(Color(0,1,1,1)))
+        super().__init__(model='sphere', scale=0.6, color=Color(0,1,1,1))
         self.x = lane * 2.0
         self.y = 0.5
         self.z = z
-        self.lane = lane
 
     def update(self):
         self.z += time.dt * 16.0
@@ -91,50 +85,52 @@ class Pickup(Entity):
 
 class Rider(Entity):
     def __init__(self):
-        super().__init__(model='sphere', color=Neon.mat(Color(1,0.8,0,1)), scale=0.8, y=0.5, z=4)
+        super().__init__(model='sphere', color=Color(1,0.8,0,1), scale=0.8, y=0.5, z=4)
         self.target_x = 0.0
 
     def update(self):
         self.x = lerp(self.x, self.target_x, min(1, time.dt*10))
 
-class Game(Ursina):
-    def __init__(self):
-        super().__init__(borderless=False)
-        window.size = (WIN_W, WIN_H)
-        camera.position = (0, 5, -8)
-        camera.look_at((0,0.5,0))
-        for i in (-1, 0, 1):
-            Entity(model='cube', position=(i*2.0, 0, 0), scale=(1.9, 0.1, 200), color=Color(0.12,0.15,0.2,1))
-            Entity(model='cube', position=(i*2.0, 0.06, 0), scale=(0.05, 0.01, 200), color=Color(0,1,1,1))
-        self.rider = Rider()
-        self.audio = AudioAnalyzer()
-        self.fb: FileBrowser | None = None
-        Text("Мышь: X — полоса | F: выбрать аудио", position=(-0.5, 0.45), scale=1, origin=(-.5,-.5))
+# App setup (no subclassing)
+app = Ursina(borderless=False)
+window.size = (WIN_W, WIN_H)
+camera.position = (0, 5, -8)
+camera.look_at((0,0.5,0))
 
-    def input(self, key):
-        if key == 'f' and self.fb is None:
-            self.fb = FileBrowser(file_types=("*.mp3","*.wav","*.ogg","*.flac","*.m4a"))
-            def picked(p):
-                if p:
-                    try:
-                        self.audio.load(p)
-                    except Exception as e:
-                        print('Audio load failed:', e)
-                self.fb.disable()
-                self.fb = None
-            self.fb.on_submit = picked
-            self.fb.on_cancel = lambda: (self.fb.disable(), setattr(self, 'fb', None))
+for i in (-1, 0, 1):
+    Entity(model='cube', position=(i*2.0, 0, 0), scale=(1.9, 0.1, 200), color=Color(0.12,0.15,0.2,1))
+    Entity(model='cube', position=(i*2.0, 0.06, 0), scale=(0.05, 0.01, 200), color=Color(0,1,1,1))
 
-    def update(self):
-        nx = mouse.position[0]
-        lane = int(round((nx+1)/2 * 2)) - 1
-        lane = max(-1, min(1, lane))
-        self.rider.target_x = lane * 2.0
-        bl, bm, bh = self.audio.get_beats(time.dt)
-        if bl: Pickup(-1, -60)
-        if bm: Pickup(0, -60)
-        if bh: Pickup(1, -60)
+rider = Rider()
+audio = AudioAnalyzer()
+fb: FileBrowser | None = None
+Text("Мышь: X — полоса | F: выбрать аудио", position=(-0.5, 0.45), scale=1, origin=(-.5,-.5))
 
-if __name__ == '__main__':
-    game = Game()
-    game.run()
+
+def input(key):
+    global fb
+    if key == 'f' and fb is None:
+        fb = FileBrowser(file_types=("*.mp3","*.wav","*.ogg","*.flac","*.m4a"))
+        def picked(p):
+            global fb
+            if p:
+                try:
+                    audio.load(p)
+                except Exception as e:
+                    print('Audio load failed:', e)
+            fb.disable(); fb = None
+        fb.on_submit = picked
+        fb.on_cancel = lambda: (fb.disable(), setattr(__import__('builtins'), 'fb', None))
+
+
+def update():
+    nx = mouse.position[0]
+    lane = int(round((nx+1)/2 * 2)) - 1
+    lane = max(-1, min(1, lane))
+    rider.target_x = lane * 2.0
+    bl, bm, bh = audio.get_beats(time.dt)
+    if bl: Pickup(-1, -60)
+    if bm: Pickup(0, -60)
+    if bh: Pickup(1, -60)
+
+app.run()
