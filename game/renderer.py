@@ -92,6 +92,14 @@ void main() {
 """
 
 
+def _set_uniform_safe(program: moderngl.Program, name: str, value) -> None:
+    try:
+        program[name].value = value
+    except KeyError:
+        # Uniform might be optimized out; ignore
+        pass
+
+
 class Renderer:
     def __init__(self, window: pyglet.window.Window):
         self.ctx = moderngl.create_context()
@@ -164,8 +172,8 @@ class Renderer:
         self.ctx.disable(moderngl.DEPTH_TEST)
         self.sky_program['u_view'].write(bytes(view))
         self.sky_program['u_proj'].write(bytes(proj))
-        self.sky_program['u_time'].value = time_of_day
-        self.sky_program['u_sun_dir'].value = sun_dir
+        _set_uniform_safe(self.sky_program, 'u_time', time_of_day)
+        _set_uniform_safe(self.sky_program, 'u_sun_dir', sun_dir)
         self.sky_vao.render(mode=moderngl.TRIANGLE_STRIP)
 
         # World
