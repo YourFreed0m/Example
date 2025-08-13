@@ -1,7 +1,7 @@
 from ursina import *
+from ursina import Color
 from ursina.prefabs.first_person_controller import FirstPersonController
 from typing import Dict
-import json
 
 from rpg import PlayerStats, Inventory, save_game, load_game
 from world import VoxelWorld
@@ -22,8 +22,8 @@ inventory = Inventory(**inv_data) if inv_data else Inventory()
 spawn = saved.get('position', {'x': 8, 'y': 20, 'z': 8})
 
 # Lighting
-AmbientLight(color=color.rgba(255,255,255,80))
-DirectionalLight(direction=(1,-1,-.5), color=color.rgba(255,255,255,255))
+AmbientLight(color=Color(1, 1, 1, 0.8))
+DirectionalLight(direction=(1, -1, -.5), color=Color(1, 1, 1, 1))
 
 # Textures
 texture_paths: Dict[str, str] = ensure_textures_downloaded()
@@ -45,9 +45,9 @@ player.gravity = 1.0
 hud = HUD([slot['id'] for slot in inventory.slots])
 hud.set_selected(inventory.selected_index)
 
-crosshair = Entity(parent=camera.ui, model='quad', color=color.white, scale=(.0025,.02), rotation_z=0)
-Entity(parent=camera.ui, model='quad', color=color.white, scale=(.02,.0025), rotation_z=0)
-
+# Crosshair
+Entity(parent=camera.ui, model='quad', color=Color(1, 1, 1, 1), scale=(.0025, .02), rotation_z=0)
+Entity(parent=camera.ui, model='quad', color=Color(1, 1, 1, 1), scale=(.02, .0025), rotation_z=0)
 
 selected_block_id = lambda: inventory.slots[inventory.selected_index]['id']
 
@@ -73,7 +73,7 @@ def input(key):
     if key == 'right mouse down':
         place_block()
 
-    if key in ['1','2','3','4','5']:
+    if key in ['1', '2', '3', '4', '5']:
         i = int(key) - 1
         if 0 <= i < len(inventory.slots):
             inventory.selected_index = i
@@ -90,11 +90,11 @@ def update():
 
 
 # Autosave
-from direct.stdpy import threading
+import threading
 
 def autosave_loop():
+    import time as _t
     while True:
-        import time as _t
         _t.sleep(2)
         data = {
             'stats': player_stats.__dict__,

@@ -11,4 +11,8 @@ Run:
 - Install: `pip install -r requirements.txt`
 - Start: `python main.py`
 
-Note: This opens a window; if running on a headless server, use a desktop/X environment.
+Notes:
+- If `noise` fails to install, the game automatically falls back to `perlin-noise` (already listed in requirements).
+- If your Ursina version lacks color helpers (e.g. `color.white`), this project uses `Color(r,g,b,a)` everywhere to be version-agnostic.
+- On Windows, prefer a virtualenv:
+  - `py -m venv .venv && .venv\Scripts\activate && pip install -r requirements.txt && py main.py`

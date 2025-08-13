@@ -1,28 +1,59 @@
-from ursina import *
-from noise import pnoise2
+from ursina import Entity, scene, load_texture, Color
 from typing import Dict, Tuple
+
+# Noise helpers: prefer noise.pnoise2; fallback to perlin-noise if not available
+try:
+    from noise import pnoise2  # type: ignore
+
+    def height_noise(x: int, z: int, seed: int, scale: float) -> float:
+        return pnoise2((x + seed) / scale, (z - seed) / scale,
+                       octaves=2, persistence=0.5, lacunarity=2.0,
+                       repeatx=4096, repeaty=4096, base=0)
+
+    def tree_noise(x: int, z: int, seed: int) -> float:
+        return pnoise2((x + 999) / 10.0, (z - 555) / 10.0)
+
+except Exception:
+    from perlin_noise import PerlinNoise  # type: ignore
+    _height_noise = None
+    _tree_noise = None
+
+    def _ensure_noises(seed: int):
+        global _height_noise, _tree_noise
+        if _height_noise is None:
+            _height_noise = PerlinNoise(octaves=2, seed=seed)
+        if _tree_noise is None:
+            _tree_noise = PerlinNoise(octaves=1, seed=seed + 12345)
+
+    def height_noise(x: int, z: int, seed: int, scale: float) -> float:
+        _ensure_noises(seed)
+        return float(_height_noise([x / scale, z / scale]))
+
+    def tree_noise(x: int, z: int, seed: int) -> float:
+        _ensure_noises(seed)
+        return float(_tree_noise([x / 10.0, z / 10.0]))
 
 
 def key_of(x: int, y: int, z: int) -> str:
     return f"{x},{y},{z}"
 
 
-class Voxel(Button):
-    def __init__(self, position=(0,0,0), texture_path: str = None, block_id: str = 'grass'):
+class Voxel(Entity):
+    def __init__(self, position=(0, 0, 0), texture_path: str | None = None, block_id: str = 'grass'):
         super().__init__(
             parent=scene,
             position=position,
             model='cube',
             origin_y=.5,
             texture=load_texture(texture_path) if texture_path else None,
-            color=color.white,
-            highlight_color=color.lime,
-            collider='box')
+            color=Color(1, 1, 1, 1),
+            collider='box'
+        )
         self.block_id = block_id
 
 
 class VoxelWorld:
-    def __init__(self, size_x: int = 16, size_z: int = 16, max_height: int = 12, seed: int = 1337, textures: Dict[str, str] = None):
+    def __init__(self, size_x: int = 16, size_z: int = 16, max_height: int = 12, seed: int = 1337, textures: Dict[str, str] | None = None):
         self.size_x = size_x
         self.size_z = size_z
         self.max_height = max_height
@@ -33,13 +64,9 @@ class VoxelWorld:
 
     def generate(self):
         scale = 20.0
-        octaves = 2
-        persistence = 0.5
-        lacunarity = 2.0
         for x in range(self.size_x):
             for z in range(self.size_z):
-                n = pnoise2((x + self.seed) / scale, (z - self.seed) / scale,
-                            octaves=octaves, persistence=persistence, lacunarity=lacunarity, repeatx=1024, repeaty=1024, base=0)
+                n = height_noise(x, z, self.seed, scale)
                 base_h = int((n * 0.5 + 0.5) * (self.max_height - 4)) + 4
                 for y in range(base_h + 1):
                     if y == base_h:
@@ -51,7 +78,7 @@ class VoxelWorld:
                     self._spawn((x, y, z), block_id)
 
                 # Simple tree chance
-                t = pnoise2((x + 999) / 10, (z - 555) / 10)
+                t = tree_noise(x, z, self.seed)
                 if t > 0.35 and base_h + 4 < self.max_height:
                     for ty in range(1, 4):
                         self._spawn((x, base_h + ty, z), 'log')
@@ -59,7 +86,7 @@ class VoxelWorld:
                         for dz in range(-1, 2):
                             self._spawn((x + dx, base_h + 3, z + dz), 'plank')
 
-    def _spawn(self, pos: Tuple[int,int,int], block_id: str):
+    def _spawn(self, pos: Tuple[int, int, int], block_id: str):
         x, y, z = pos
         if x < 0 or z < 0 or x >= self.size_x or z >= self.size_z:
             return
@@ -77,7 +104,8 @@ class VoxelWorld:
         k = key_of(x, y, z)
         if block_id == 'air':
             if k in self.blocks:
-                destroy(self.blocks[k])
+                self.blocks[k].disable()
+                self.blocks[k].parent = None
                 del self.blocks[k]
         else:
             if k in self.blocks:
@@ -93,6 +121,6 @@ class VoxelWorld:
             x, y, z = map(int, k.split(','))
             if block_id == 'air':
                 if k in self.blocks:
-                    destroy(self.blocks[k]); del self.blocks[k]
+                    self.blocks[k].disable(); self.blocks[k].parent = None; del self.blocks[k]
             else:
                 self.set_block(x, y, z, block_id)
