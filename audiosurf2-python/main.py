@@ -3,6 +3,7 @@ from ursina import Color
 from ursina.prefabs.file_browser import FileBrowser
 from pydub import AudioSegment
 import numpy as np
+from pathlib import Path
 
 WIN_W, WIN_H = 1280, 800
 
@@ -85,17 +86,18 @@ class Pickup(Entity):
 
 class Rider(Entity):
     def __init__(self):
-        super().__init__(model='sphere', color=Color(1,0.8,0,1), scale=0.8, y=0.5, z=4)
+        super().__init__(model='sphere', color=Color(1,0.8,0,1), scale=0.8, y=0.5, z=-2)
         self.target_x = 0.0
 
     def update(self):
         self.x = lerp(self.x, self.target_x, min(1, time.dt*10))
 
-# App setup (no subclassing)
+# App setup
 app = Ursina(borderless=False)
 window.size = (WIN_W, WIN_H)
-camera.position = (0, 5, -8)
-camera.look_at((0,0.5,0))
+# Move camera further back and aim slightly down so player is visually near bottom
+camera.position = (0, 4, -12)
+camera.look_at((0,0.4,-2))
 
 for i in (-1, 0, 1):
     Entity(model='cube', position=(i*2.0, 0, 0), scale=(1.9, 0.1, 200), color=Color(0.12,0.15,0.2,1))
@@ -110,7 +112,9 @@ Text("Мышь: X — полоса | F: выбрать аудио", position=(-0
 def input(key):
     global fb
     if key == 'f' and fb is None:
-        fb = FileBrowser(file_types=("*.mp3","*.wav","*.ogg","*.flac","*.m4a"))
+        # Show from user's home; allow common audio types and any files
+        patterns = ("*.mp3","*.MP3","*.wav","*.WAV","*.ogg","*.OGG","*.flac","*.FLAC","*.m4a","*.M4A","*.*")
+        fb = FileBrowser(file_types=patterns, folder=str(Path.home()))
         def picked(p):
             global fb
             if p:
@@ -119,8 +123,11 @@ def input(key):
                 except Exception as e:
                     print('Audio load failed:', e)
             fb.disable(); fb = None
+        def canceled():
+            global fb
+            fb.disable(); fb = None
         fb.on_submit = picked
-        fb.on_cancel = lambda: (fb.disable(), setattr(__import__('builtins'), 'fb', None))
+        fb.on_cancel = canceled
 
 
 def update():
