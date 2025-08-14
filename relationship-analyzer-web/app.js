@@ -193,14 +193,14 @@
 		const recent = state.events.filter(e=> new Date(e.timestamp).getTime()>=start);
 		if(!recent.length) return 0.5;
 		const pos = recent.filter(e=>['positive','support','date','gift'].includes(e.type)).length;
-		const neg = recent.filter(e=>['conflict','withdraw','criticisim','stonewall'].includes(e.type)).length;
+		const neg = recent.filter(e=>['conflict','withdraw','criticism','stonewall'].includes(e.type)).length;
 		const total = recent.length; const stab = (pos - neg)/Math.max(1,total);
 		return clamp01(0.5 + 0.5*stab);
 	}
 
 	function healthScore(){
 		const pos = state.events.filter(e=>['positive','support','gift','date'].includes(e.type)).reduce((a,b)=>a+(b.intensity||0),0);
-		const neg = state.events.filter(e=>['conflict','withdraw','criticisim','stonewall'].includes(e.type)).reduce((a,b)=>a+(b.intensity||0),0);
+		const neg = state.events.filter(e=>['conflict','withdraw','criticism','stonewall'].includes(e.type)).reduce((a,b)=>a+(b.intensity||0),0);
 		let score = 0.5 + Math.max(-10, Math.min(10, pos-neg))/20;
 		const lastHappy = [...state.answers].reverse().find(a=>a.questionnaire==='happiness');
 		if(lastHappy){ const h=Number(lastHappy.payload?.happiness)||0.5; score = 0.7*score + 0.3*h; }
