@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Telegram Web — Clone</title>
+	<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+	<div class="app">
+		<aside class="sidebar">
+			<header class="sidebar-header">
+				<div class="brand">TG</div>
+				<input id="search" type="text" placeholder="Поиск" />
+			</header>
+			<div id="chat-list" class="chat-list"></div>
+		</aside>
+		<main class="chat">
+			<header class="chat-header">
+				<div class="chat-title" id="chat-title">Выберите чат</div>
+				<div class="chat-actions">
+					<button id="pin-chat" title="Закрепить">📌</button>
+					<button id="mute-chat" title="Отключить звук">🔕</button>
+				</div>
+			</header>
+			<section id="message-list" class="message-list"></section>
+			<footer class="composer">
+				<div id="reply-preview" class="reply hidden"></div>
+				<textarea id="input" rows="1" placeholder="Сообщение"></textarea>
+				<div class="compose-actions">
+					<button id="attach">📎</button>
+					<button id="send">➤</button>
+				</div>
+			</footer>
+		</main>
+		<aside class="info">
+			<header class="info-header">Инфо</header>
+			<div id="info-content" class="info-content">Нет данных</div>
+		</aside>
+	</div>
+	<script src="app.js"></script>
+</body>
+</html>
