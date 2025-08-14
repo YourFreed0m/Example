@@ -94,15 +94,51 @@
 		'happiness': {
 			title: 'Счастье в отношениях',
 			questions: [
-				{ id:'happiness', text:'Вы счастливы в отношениях?', scale:'agree5' },
-				{ id:'satisfaction', text:'Вас устраивает общение?', scale:'agree5' },
+				{ id:'happy_now', text:'Вы счастливы сейчас?', scale:'agree5' },
+				{ id:'satisfied_talk', text:'Вас устраивает общение?', scale:'agree5' },
+				{ id:'warmth', text:'Вы чувствуете тепло?', scale:'agree5' },
+				{ id:'care', text:'Вы чувствуете заботу?', scale:'agree5' },
+				{ id:'joy', text:'Вы радуетесь вместе?', scale:'agree5' },
+				{ id:'proud', text:'Вы гордитесь отношениями?', scale:'agree5' },
+				{ id:'safe', text:'Вы чувствуете себя в безопасности?', scale:'agree5' },
+				{ id:'open', text:'Вы можете открыто говорить?', scale:'agree5' },
+				{ id:'heard', text:'Вас слушают?', scale:'agree5' },
+				{ id:'seen', text:'Вас понимают?', scale:'agree5' },
+				{ id:'equal', text:'Вы чувствуете равенство?', scale:'agree5' },
+				{ id:'time_quality', text:'Совместное время приятно?', scale:'agree5' },
+				{ id:'grow', text:'Вы растёте вместе?', scale:'agree5' },
+				{ id:'fun', text:'Вам весело вместе?', scale:'agree5' },
+				{ id:'intimacy_ok', text:'Близость вас радует?', scale:'agree5' },
+				{ id:'small_things', text:'Мелочи приносят радость?', scale:'agree5' },
+				{ id:'no_fear', text:'Страха мало?', scale:'agree5' },
+				{ id:'hope', text:'Вы надеетесь на лучшее?', scale:'agree5' },
+				{ id:'energy', text:'Отношения дают силы?', scale:'agree5' },
+				{ id:'gratitude_feel', text:'Вы часто благодарны?', scale:'agree5' },
 			]
 		},
 		'conflict_style': {
 			title: 'Стиль конфликта',
 			questions: [
-				{ id:'deescalate', text:'Вы умеете успокаивать спор?', scale:'agree5' },
-				{ id:'criticize', text:'Вы часто критикуете?', scale:'agree5' },
+				{ id:'stay_calm', text:'Вы сохраняете спокойствие?', scale:'agree5' },
+				{ id:'listen', text:'Вы слушаете?', scale:'agree5' },
+				{ id:'explain', text:'Вы объясняете спокойно?', scale:'agree5' },
+				{ id:'seek_compromise', text:'Вы ищете компромисс?', scale:'agree5' },
+				{ id:'take_break', text:'Вы берёте паузу при необходимости?', scale:'agree5' },
+				{ id:'own_part', text:'Вы признаёте свою часть?', scale:'agree5' },
+				{ id:'apologize', text:'Вы извиняетесь?', scale:'agree5' },
+				{ id:'avoid_talk', text:'Вы избегаете разговора?', scale:'agree5' },
+				{ id:'raise_voice', text:'Вы повышаете голос?', scale:'agree5' },
+				{ id:'interrupt', text:'Вы перебиваете?', scale:'agree5' },
+				{ id:'blame', text:'Вы обвиняете?', scale:'agree5' },
+				{ id:'sarcasm', text:'Вы используете сарказм?', scale:'agree5' },
+				{ id:'insult', text:'Вы обижаете словами?', scale:'agree5' },
+				{ id:'threat', text:'Вы угрожаете разрывом?', scale:'agree5' },
+				{ id:'stonewall', text:'Вы молчите назло?', scale:'agree5' },
+				{ id:'ruminate', text:'Вы долго злитесь?', scale:'agree5' },
+				{ id:'forgive_fast', text:'Вы быстро миритесь?', scale:'agree5' },
+				{ id:'repair', text:'Вы предлагаете решение?', scale:'agree5' },
+				{ id:'we_language', text:'Вы говорите «мы», не «ты»?', scale:'agree5' },
+				{ id:'kind_words', text:'Вы говорите мягко?', scale:'agree5' },
 			]
 		}
 	};
@@ -156,21 +192,20 @@
 		// score mapping
 		let scored = {};
 		if(currentTestKey==='happiness'){
-			const h = clamp01(optionToValue(rawAnswers.happiness));
-			const s = clamp01(optionToValue(rawAnswers.satisfaction));
-			scored = { happiness:h, satisfaction:s, composite: 0.6*h + 0.4*s };
+			let sum=0, n=0; for(const q of TESTS[currentTestKey].questions){ sum+= clamp01(optionToValue(rawAnswers[q.id])); n++; }
+			const composite = n? sum/n : 0.5;
+			scored = { composite };
 		} else if(currentTestKey==='conflict_style'){
-			const d = clamp01(optionToValue(rawAnswers.deescalate));
-			const c = clamp01(optionToValue(rawAnswers.criticize));
-			scored = { deescalate:d, criticize:c, composite: 0.6*d + 0.4*(1-c) };
+			const negative = new Set(['avoid_talk','raise_voice','interrupt','blame','sarcasm','insult','threat','stonewall','ruminate']);
+			let sum=0, n=0; for(const q of TESTS[currentTestKey].questions){ let v= clamp01(optionToValue(rawAnswers[q.id])); if(negative.has(q.id)) v=1-v; sum+=v; n++; }
+			const composite = n? sum/n : 0.5;
+			scored = { composite };
 		} else if(currentTestKey==='relationship_overview'){
-			// Compute composite (invert negative items)
-			const negIds = new Set(['criticize','jealousy_low']); // 'jealousy_low' is positive wording, so keep as is
+			// Compute composite (invert clearly negative items if appear)
 			let sum = 0, n = 0;
 			for(const q of TESTS[currentTestKey].questions){
 				if(q.id.startsWith('ll_')) continue; // separate
 				let v = clamp01(optionToValue(rawAnswers[q.id]));
-				if(negIds.has(q.id)) v = 1 - v;
 				sum += v; n++;
 			}
 			const composite = n? sum/n : 0.5;
@@ -265,7 +300,7 @@
 		const neg = state.events.filter(e=>['conflict','withdraw','criticism','stonewall'].includes(e.type)).reduce((a,b)=>a+(b.intensity||0),0);
 		let score = 0.5 + Math.max(-10, Math.min(10, pos-neg))/20;
 		const lastHappy = [...state.answers].reverse().find(a=>a.questionnaire==='happiness');
-		if(lastHappy){ const h=Number(lastHappy.payload?.happiness)||0.5; score = 0.7*score + 0.3*h; }
+		if(lastHappy){ const h=(lastHappy.payload?.composite!=null? Number(lastHappy.payload.composite) : Number(lastHappy.payload?.happiness)||0.5); score = 0.7*score + 0.3*h; }
 		const lastOverview = [...state.answers].reverse().find(a=>a.questionnaire==='relationship_overview');
 		if(lastOverview){ const c=Number(lastOverview.payload?.composite)||0.5; score = 0.6*score + 0.4*c; }
 		return clamp01(score);
