@@ -52,7 +52,6 @@ def list_windows() -> List[Tuple[int, str]]:
 def get_window_rect(hwnd: int) -> Optional[Tuple[int, int, int, int]]:
 	try:
 		rect = win32gui.GetWindowRect(hwnd)
-		# account for DPI scaling (use logical coords for capture)
 		return rect  # left, top, right, bottom
 	except Exception:
 		return None
@@ -80,12 +79,10 @@ class OverlayWindow(QtWidgets.QWidget):
 		for rect, text in self.boxes:
 			if not text:
 				continue
-			# Autosize font to fit rect width/height, cache by (w,h,text hash)
 			key = (rect.width(), rect.height(), hashlib.md5(text.encode('utf-8')).hexdigest())
 			font = self.font_cache.get(key)
 			if font is None:
 				font = QtGui.QFont('Segoe UI')
-				# binary search to fit
 				lo, hi = 6, max(10, rect.height())
 				fm = QtGui.QFontMetrics(font)
 				while lo <= hi:
@@ -100,7 +97,6 @@ class OverlayWindow(QtWidgets.QWidget):
 				font.setPointSize(max(6, hi))
 				self.font_cache[key] = font
 			p.setFont(font)
-			# draw semi-transparent backdrop for readability
 			bg = QtGui.QColor(10, 10, 10, 120)
 			p.fillRect(rect, bg)
 			p.setPen(QtGui.QColor(230, 240, 255))
@@ -109,6 +105,11 @@ class OverlayWindow(QtWidgets.QWidget):
 
 
 class MainWindow(QtWidgets.QMainWindow):
+	boxes_signal = QtCore.Signal(list)
+	geom_signal = QtCore.Signal(int, int, int, int)
+	show_overlay_signal = QtCore.Signal()
+	status_signal = QtCore.Signal(str)
+
 	def __init__(self):
 		super().__init__()
 		self.setWindowTitle('Overlay OCR Translator')
@@ -148,6 +149,12 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.start_btn.clicked.connect(self.start)
 		self.stop_btn.clicked.connect(self.stop)
 
+		# Connect signals
+		self.boxes_signal.connect(self.overlay.set_boxes)
+		self.geom_signal.connect(lambda l,t,w,h: self.overlay.setGeometry(QtCore.QRect(l,t,w,h)))
+		self.show_overlay_signal.connect(self.overlay.show)
+		self.status_signal.connect(self.status.setText)
+
 		self.populate_windows()
 
 		self.ocr_thread: Optional[threading.Thread] = None
@@ -161,11 +168,10 @@ class MainWindow(QtWidgets.QMainWindow):
 		global except_import
 		try:
 			if except_import is not None:
-				self.status.setText('Argos not available, translation disabled')
+				self.status_signal.emit('Argos not available, translation disabled')
 				return
 			installed = package.get_installed_packages()
 			if not any(p.from_code == 'en' and p.to_code == 'ru' for p in installed):
-				# try install
 				package.update_package_index()
 				pkg = next((p for p in package.get_available_packages() if p.from_code=='en' and p.to_code=='ru'), None)
 				if pkg:
@@ -176,7 +182,7 @@ class MainWindow(QtWidgets.QMainWindow):
 			if en and ru:
 				self.translator = en.get_translation(ru)
 		except Exception as e:
-			self.status.setText(f'Translation unavailable: {e}')
+			self.status_signal.emit(f'Translation unavailable: {e}')
 
 	def populate_windows(self):
 		self.combo.clear()
@@ -191,19 +197,19 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.stop_flag.clear()
 		self.ocr_thread = threading.Thread(target=self.run_loop, args=(hwnd,), daemon=True)
 		self.ocr_thread.start()
-		self.status.setText('Работает...')
+		self.status_signal.emit('Работает...')
 
 	def stop(self):
 		self.stop_flag.set()
 		self.overlay.hide()
-		self.status.setText('Остановлено')
+		self.status_signal.emit('Остановлено')
 
 	def run_loop(self, hwnd: int):
 		with mss.mss() as sct:
 			while not self.stop_flag.is_set():
 				rect = get_window_rect(hwnd)
 				if not rect:
-					self.status.setText('Окно недоступно')
+					self.status_signal.emit('Окно недоступно')
 					break
 				left, top, right, bottom = rect
 				w = max(1, right - left)
@@ -211,7 +217,6 @@ class MainWindow(QtWidgets.QMainWindow):
 				mon = { 'left': left, 'top': top, 'width': w, 'height': h }
 				sct_img = sct.grab(mon)
 				img = Image.frombytes('RGB', sct_img.size, sct_img.bgra, 'raw', 'BGRX')
-				# Frame dedup
 				frame_hash = hashlib.md5(img.tobytes()).hexdigest()
 				if frame_hash == self.last_frame_hash:
 					time.sleep(self.interval.value())
@@ -226,17 +231,13 @@ class MainWindow(QtWidgets.QMainWindow):
 								b.text = self.translator.translate(b.text)
 							except Exception:
 								pass
-				# move/resize overlay
-				QtCore.QMetaObject.invokeMethod(self.overlay, 'setGeometry', QtCore.Qt.QueuedConnection,
-					QtCore.Q_ARG(QtCore.QRect, QtCore.QRect(left, top, w, h)))
-				QtCore.QMetaObject.invokeMethod(self.overlay, 'show', QtCore.Qt.QueuedConnection)
-				QtCore.QMetaObject.invokeMethod(self.overlay, 'set_boxes', QtCore.Qt.QueuedConnection,
-					QtCore.Q_ARG(list, boxes))
+				self.geom_signal.emit(left, top, w, h)
+				self.show_overlay_signal.emit()
+				self.boxes_signal.emit(boxes)
 
 				time.sleep(self.interval.value())
 
 	def ocr_image(self, img: Image.Image) -> List[OcrBox]:
-		# Use tesseract data with word-level boxes, then group to lines
 		try:
 			custom_oem_psm = r'--oem 1 --psm 6 -l eng'
 			data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT, config=custom_oem_psm)
@@ -253,14 +254,12 @@ class MainWindow(QtWidgets.QMainWindow):
 				w = int(data['width'][i])
 				h = int(data['height'][i])
 				boxes.append(OcrBox(text=text, left=x, top=y, width=w, height=h, conf=conf))
-			# simple line grouping by y overlap
 			lines: List[OcrBox] = []
 			boxes.sort(key=lambda b: (b.top, b.left))
 			for b in boxes:
 				placed = False
 				for ln in lines:
 					if abs((b.top + b.height/2) - (ln.top + ln.height/2)) < max(ln.height, b.height):
-						# merge
 						ln.text = (ln.text + ' ' + b.text).strip()
 						ln.width = max(ln.width, (b.left + b.width) - ln.left)
 						ln.height = max(ln.height, b.height)
@@ -270,7 +269,7 @@ class MainWindow(QtWidgets.QMainWindow):
 					lines.append(OcrBox(text=b.text, left=b.left, top=b.top, width=b.width, height=b.height, conf=b.conf))
 			return lines
 		except Exception as e:
-			self.status.setText(f'OCR error: {e}')
+			self.status_signal.emit(f'OCR error: {e}')
 			return []
 
 
@@ -278,7 +277,6 @@ def looks_english(s: str) -> bool:
 	s = s.strip()
 	if not s:
 		return False
-	# Heuristics: contains A-Z letters, not mostly digits/symbols
 	letters = sum(c.isalpha() for c in s)
 	latin = sum(('A' <= c <= 'Z') or ('a' <= c <= 'z') for c in s)
 	return latin >= max(1, letters // 2)
