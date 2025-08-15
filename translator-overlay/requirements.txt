@@ -1,0 +1,8 @@
+PySide6==6.7.2
+mss==9.0.1
+pytesseract==0.3.13
+Pillow==10.4.0
+numpy==1.26.4
+pywin32==306
+python-dotenv==1.0.1
+argostranslate==1.9.6
