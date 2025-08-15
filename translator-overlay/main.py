@@ -60,7 +60,8 @@ def get_window_rect(hwnd: int) -> Optional[Tuple[int, int, int, int]]:
 
 class OverlayWindow(QtWidgets.QWidget):
 	def __init__(self):
-		super().__init__(flags=QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.Tool)
+		super().__init__()
+		self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.Tool)
 		self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
 		self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, True)
 		self.boxes: List[Tuple[QtCore.QRect, str]] = []
